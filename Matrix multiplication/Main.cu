@@ -8,11 +8,10 @@ static void HandleError(const cudaError_t err, const char* const in_file, const 
 {
 	if (err != cudaSuccess)
 	{
-		printf("%s,\nв файле %s,\nв строке: %d.\n", cudaGetErrorString(err), in_file, line);
+		printf("%s,\nin file %s,\nin line: %d.\n", cudaGetErrorString(err), in_file, line);
 		exit(EXIT_FAILURE);
 	}
 }
-//#define __global__
 
 // [r1 x c1] * [r2 x c2] = [r1 x c2].
 // c1 == r2!
@@ -31,37 +30,37 @@ int main()
 {
 	using namespace std;
 	const int q = 8192, n = 4096, m = 6144;
-	Matrix A = Init(n, q);	// Иниализировать матрицу A.
+	Matrix A = Init(n, q);	// Initialize matrix A.
 	for (el_t i = 0; i < n * q; ++i)
 		A.El[i] = i + 1;
-	Matrix B = Init(q, m);	// Иниализировать матрицу B.
+	Matrix B = Init(q, m);	// Initialize matrix B.
 	for (el_t i = 0; i < q * m; ++i)
 		B.El[i] = i + 1;
-	Matrix MatResCPU = InitZeros(A.Row, B.Col);	// Иниализировать нулями матрицу результат умножения на CPU.
-	Matrix MatResGPU = InitZeros(A.Row, B.Col);	// Иниализировать нулями матрицу результат умножения на GPU.
+	Matrix MatResCPU = InitZeros(A.Row, B.Col);	// Initialize the matrix with zeros as the result of multiplication on the CPU.
+	Matrix MatResGPU = InitZeros(A.Row, B.Col);	// Initialize the matrix with zeros as the result of multiplication on the GPU.
 	el_t* dev_A, *dev_B, *dev_MatRes;
-	// Выделить память на GPU для матриц.
+	// Allocate memory on the GPU for matrices.
 	HANDLE_ERROR(cudaMalloc((void**)&dev_A, A.Row * A.Col * sizeof(el_t)));
 	HANDLE_ERROR(cudaMalloc((void**)&dev_B, B.Row * B.Col * sizeof(el_t)));
 	HANDLE_ERROR(cudaMalloc((void**)&dev_MatRes, MatResGPU.Row * MatResGPU.Col * sizeof(el_t)));
-	// Скопировать матрицы на GPU.
+	// Copy matrixes to GPU.
 	HANDLE_ERROR(cudaMemcpy(dev_A, A.El, A.Row * A.Col * sizeof(el_t), cudaMemcpyHostToDevice));
 	HANDLE_ERROR(cudaMemcpy(dev_B, B.El, B.Row * B.Col * sizeof(el_t), cudaMemcpyHostToDevice));
-	double TimesMultiplyByRow[COUNT], TimesMatrixMultiplication[COUNT];	// Массивы для хранения временных затрат на выполнение умножений.
-	for (int i = 0; i < COUNT; ++i)	// Замерить время выполнения обоих алгоритмов COUNT раз.
+	double TimesMultiplyByRow[COUNT], TimesMatrixMultiplication[COUNT];	// Arrays for storing the time spent on performing multiplications.
+	for (int i = 0; i < COUNT; ++i)	// Measure the execution time of both algorithms COUNT times.
 	{
 		FillZeros(&MatResCPU);
 		clock_t Start = clock();
-		MultiplyByRow(&A, &B, &MatResCPU);	// Выполнить умножение матриц на CPU.
+		MultiplyByRow(&A, &B, &MatResCPU);	// Perform matrix multiplication on the CPU.
 		clock_t End = clock();
 		TimesMultiplyByRow[i] = ((double)End - Start) / CLOCKS_PER_SEC;
 		Start = clock();
-		MatrixMultiplication <<<dim3(m, n), 1 >>>(dev_A, dev_B, dev_MatRes, A.Row, A.Col, B.Col);	// Выполнить умножение матриц на GPU.
+		MatrixMultiplication <<<dim3(m, n), 1 >>>(dev_A, dev_B, dev_MatRes, A.Row, A.Col, B.Col);	// Perform matrix multiplication on the GPU.
 		End = clock();
 		TimesMatrixMultiplication[i] = ((double)End - Start) / CLOCKS_PER_SEC;
 	}
-	HANDLE_ERROR(cudaMemcpy(MatResGPU.El, dev_MatRes, MatResGPU.Row * MatResGPU.Col * sizeof(el_t), cudaMemcpyDeviceToHost));	// Скопировать результат в ОЗУ.
-	// Освободить GPU память.
+	HANDLE_ERROR(cudaMemcpy(MatResGPU.El, dev_MatRes, MatResGPU.Row * MatResGPU.Col * sizeof(el_t), cudaMemcpyDeviceToHost));	// Copy the result to RAM.
+	// Release GPU memory.
 	cudaFree(dev_A);
 	cudaFree(dev_B);
 	cudaFree(dev_MatRes);
@@ -70,17 +69,17 @@ int main()
 	double Sum = 0;
 	for (int i = 0; i < COUNT; ++i)
 	{
-		printf("Умножение на CPU %i:\t%f:\n", i + 1, TimesMultiplyByRow[i]);
+		printf("Multiplication by CPU %i:\t%f:\n", i + 1, TimesMultiplyByRow[i]);
 		Sum += TimesMultiplyByRow[i];
 	}
-	printf("Умножение на CPU (avr.):\t%f:\n", Sum / COUNT);
+	printf("Multiplication by CPU (avr.):\t%f:\n", Sum / COUNT);
 	Sum = 0;
 	for (int i = 0; i < COUNT; ++i)
 	{
-		printf("Умножение на GPU %i:\t%f:\n", i + 1, TimesMatrixMultiplication[i]);
+		printf("Multiplication by GPU %i:\t%f:\n", i + 1, TimesMatrixMultiplication[i]);
 		Sum += TimesMatrixMultiplication[i];
 	}
-	printf("Умножение на GPU (avr.):\t%f:\n", Sum / COUNT);
+	printf("Multiplication by GPU (avr.):\t%f:\n", Sum / COUNT);
 	const auto exitCode = !VerifyMatrix(&MatResCPU, &MatResGPU);
 	free(MatResCPU.El);
 	free(MatResGPU.El);
