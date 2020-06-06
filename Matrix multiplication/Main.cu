@@ -85,5 +85,3 @@ int main()
 	free(MatResGPU.El);
 	return exitCode;
 }
-
-//nvcc Main.cu Matrix.cpp - O3
