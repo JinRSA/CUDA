@@ -19,4 +19,10 @@
 Компилировать командой:
 `nvcc EasyBMP.cpp kernel.cu -O3`
 
+***
+Некоторые примеры.
+![Image alt](https://github.com/JinRSA/CUDA/blob/master/Simple%20Ray%20Tracing/Images/Demo%20sample%201.jpg)
+
+![Image alt](https://github.com/JinRSA/CUDA/blob/master/Simple%20Ray%20Tracing/Images/Randome%20sample%200.jpg)
+
 (◉ܫ◉)
