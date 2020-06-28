@@ -144,6 +144,5 @@ int main()
 	}
 	free(spheres);
 	free(lightsource);
-	const auto q = 2.6e-05;
 	return EXIT_SUCCESS;
 }
