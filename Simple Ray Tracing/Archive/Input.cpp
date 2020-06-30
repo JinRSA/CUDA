@@ -83,7 +83,7 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 			std::cin.ignore();
 		}
 	} while (lightsCount < 1 || lightsCount > 10);
-	std::cout << "Enter width of the image [160:3840]: ";
+	std::cout << "Enter width of the image [160:7680]: ";
 	do
 	{
 		std::cin >> width;
@@ -92,8 +92,8 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 			std::cin.clear();
 			std::cin.ignore();
 		}
-	} while (width < 160 || width > 3840);
-	std::cout << "Enter height of the image [90:2160]: ";
+	} while (width < 160 || width > 7680);
+	std::cout << "Enter height of the image [90:4320]: ";
 	do
 	{
 		std::cin >> height;
@@ -102,8 +102,8 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 			std::cin.clear();
 			std::cin.ignore();
 		}
-	} while (height < 90 || height > 2160);
-	std::cout << "Execute on: [0 -> CPU; 1 -> GPU, 2 -> Get test]: ";
+	} while (height < 90 || height > 4320);
+	std::cout << "Execute on: [CPU -> 0; GPU -> 1, Get test -> 2]: ";
 	do
 	{
 		std::cin >> executor;
@@ -119,6 +119,6 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 	std::cout << "Spheres: " << spheresCount << std::endl;
 	std::cout << "Lights: " << lightsCount << std::endl;
 	std::cout << "Resolution: " << width << 'x' << height << std::endl;
-	std::cout << "File: " << fileName << std::endl;
 	std::cout << "Executor: " << executor << std::endl;
+	std::cout << "File: " << fileName << std::endl;
 }
