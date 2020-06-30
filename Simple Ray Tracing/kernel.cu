@@ -368,7 +368,7 @@ int main()
 			//int val;
 			//cudaDeviceGetAttribute(&val, cudaDeviceAttr::cudaDevAttrMaxBlockDimX, 0);
 			//cudaDeviceGetAttribute(&val, cudaDeviceAttr::cudaDevAttrMaxBlockDimY, 0);
-			const int maxBlockDimX = 32, maxBlockDimY = 16;
+			const int maxBlockDimX = 4, maxBlockDimY = 16;
 			const auto gridDimXY = dim3((width + maxBlockDimX - 1) / maxBlockDimX, (height + maxBlockDimY - 1) / maxBlockDimY);
 			const auto blockDimXY = dim3(maxBlockDimX, maxBlockDimY);
 			clock_t Start = clock();
@@ -437,7 +437,7 @@ int main()
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "New stack size = " << stackSize << std::endl;
 			cudaFuncSetCacheConfig(dev_exportToJPG, cudaFuncCachePreferL1);
-			const int maxBlockDimX = 32, maxBlockDimY = 16;
+			const int maxBlockDimX = 4, maxBlockDimY = 16;
 			const auto gridDimXY = dim3((width + maxBlockDimX - 1) / maxBlockDimX, (height + maxBlockDimY - 1) / maxBlockDimY);
 			const auto blockDimXY = dim3(maxBlockDimX, maxBlockDimY);
 			for (int i = 0; i < TEST_COUNT; ++i)
