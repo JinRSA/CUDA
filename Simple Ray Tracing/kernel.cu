@@ -78,7 +78,7 @@ __host__ __device__ bool sceneIntersect(const Vec3f& pos, const Vec3f& dir, cons
 	return spheresDist < 1000;
 }
 
-__host__ __device__ ColorRGB castRay(const Vec3f& pos, const Vec3f& dir, const Sphere* const spheres, const uint spheresCount, const Light* const lights, const uint lightsCount, uint depth = 0)
+__host__ __device__ ColorRGB castRay(const Vec3f& pos, const Vec3f& dir, const Sphere* const __restrict__ spheres, const uint spheresCount, const Light* __restrict__ const lights, const uint lightsCount, uint depth = 0)
 {
 	Vec3f point, N;	// N - surface normal.
 	Material material;
@@ -112,7 +112,7 @@ __host__ __device__ ColorRGB castRay(const Vec3f& pos, const Vec3f& dir, const S
 	//return material.diffuseColor * (diffuseLightIntensivity + specularLightIntensivity);
 }
 
-__global__ void dev_exportToJPG(const unsigned short* const width, const unsigned short* const height, unsigned char* B, unsigned char* G, unsigned char* R, const Sphere* const spheres, const uint spheresCount, const Light* const lights, const uint lightsCount)
+__global__ void dev_exportToJPG(const unsigned short* const __restrict__ width, const unsigned short* const __restrict__ height, unsigned char* __restrict__ B, unsigned char* __restrict__ G, unsigned char* __restrict__ R, const Sphere* const __restrict__ spheres, const uint spheresCount, const Light* const __restrict__ lights, const uint lightsCount)
 {
 	const auto j = blockIdx.x * blockDim.x + threadIdx.x;
 	const auto i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -269,7 +269,7 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 			std::cin.ignore();
 		}
 	} while (lightsCount < 1 || lightsCount > 10);
-	std::cout << "Enter width of the image [160:3840]: ";
+	std::cout << "Enter width of the image [160:7680]: ";
 	do
 	{
 		std::cin >> width;
@@ -278,8 +278,8 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 			std::cin.clear();
 			std::cin.ignore();
 		}
-	} while (width < 160 || width > 3840);
-	std::cout << "Enter height of the image [90:2160]: ";
+	} while (width < 160 || width > 7680);
+	std::cout << "Enter height of the image [90:4320]: ";
 	do
 	{
 		std::cin >> height;
@@ -288,7 +288,7 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 			std::cin.clear();
 			std::cin.ignore();
 		}
-	} while (height < 90 || height > 2160);
+	} while (height < 90 || height > 4320);
 	std::cout << "Execute on: [CPU -> 0; GPU -> 1, Get test -> 2]: ";
 	do
 	{
