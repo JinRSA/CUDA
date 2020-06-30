@@ -2,7 +2,7 @@
 #define LIGHT_H
 #include "Geometry.h"
 
-class /*alignas(16)*/ Light
+class alignas(16) Light
 {
 public:
 	Vec3f position;
