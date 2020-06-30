@@ -54,11 +54,19 @@ int main()
 			size_t stackSize;
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "Stack size = " << stackSize << std::endl;
-			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 8));
+			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 4));
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "New stack size = " << stackSize << std::endl;
+			cudaFuncSetCacheConfig(dev_exportToJPG, cudaFuncCachePreferL1);
+			//cudaFuncSetCacheConfig(dev_exportToJPG, cudaFuncCachePreferShared);
+			//int val;
+			//cudaDeviceGetAttribute(&val, cudaDeviceAttr::cudaDevAttrMaxBlockDimX, 0);
+			//cudaDeviceGetAttribute(&val, cudaDeviceAttr::cudaDevAttrMaxBlockDimY, 0);
+			const int maxBlockDimX = 32, maxBlockDimY = 16;
+			const auto gridDimXY = dim3((width + maxBlockDimX - 1) / maxBlockDimX, (height + maxBlockDimY - 1) / maxBlockDimY);
+			const auto blockDimXY = dim3(maxBlockDimX, maxBlockDimY);
 			clock_t Start = clock();
-			dev_exportToJPG<<<dim3(width, height), 1>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
+			dev_exportToJPG<<<gridDimXY, blockDimXY>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
 			cudaDeviceSynchronize();
 			clock_t End = clock();
 			std::cout << "GPU execution: " << ((double)End - Start) / CLOCKS_PER_SEC << std::endl;
@@ -119,13 +127,17 @@ int main()
 			size_t stackSize;
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "Stack size = " << stackSize << std::endl;
-			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 8));
+			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 4));
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "New stack size = " << stackSize << std::endl;
+			cudaFuncSetCacheConfig(dev_exportToJPG, cudaFuncCachePreferL1);
+			const int maxBlockDimX = 32, maxBlockDimY = 16;
+			const auto gridDimXY = dim3((width + maxBlockDimX - 1) / maxBlockDimX, (height + maxBlockDimY - 1) / maxBlockDimY);
+			const auto blockDimXY = dim3(maxBlockDimX, maxBlockDimY);
 			for (int i = 0; i < TEST_COUNT; ++i)
 			{
 				clock_t Start = clock();
-				dev_exportToJPG<<<dim3(width, height), 1>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
+				dev_exportToJPG<<<gridDimXY, blockDimXY>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
 				cudaDeviceSynchronize();
 				clock_t End = clock();
 				std::cout << "GPU execution: " << ((double)End - Start) / CLOCKS_PER_SEC << std::endl;
