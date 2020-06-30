@@ -17,11 +17,11 @@ typedef unsigned int uint;
 #define FLT_MAX 3.402823466e+38F
 #define MAX_DEPTH 10
 
-class /*alignas(32)*/ Sphere
+class alignas(32) Sphere
 {
 public:
 	Material material;
-	/*alignas(32) */Vec3f center;
+	alignas(32) Vec3f center;
 	float radius;
 	Sphere() : center(0.f, 0.f, 0.f), radius(1) {};
 	Sphere(const decltype(center)& center, const float& radius, const Material& material) : center(center), radius(radius), material(material) {};
@@ -114,12 +114,13 @@ __host__ __device__ ColorRGB castRay(const Vec3f& pos, const Vec3f& dir, const S
 
 __global__ void dev_exportToJPG(const unsigned short* const width, const unsigned short* const height, unsigned char* B, unsigned char* G, unsigned char* R, const Sphere* const spheres, const uint spheresCount, const Light* const lights, const uint lightsCount)
 {
-	if (blockIdx.x < *width && blockIdx.y < *height)
+	const auto j = blockIdx.x * blockDim.x + threadIdx.x;
+	const auto i = blockIdx.y * blockDim.y + threadIdx.y;
+	if (j < *width && i < *height)
 	{
 		const float fov = M_PI_2;//75.f;
 		const float tang = tan(fov / 2.f / 2.f);
 		const float rotX = 0.f, rotY = 0.f;
-		auto j = blockIdx.x, i = blockIdx.y;
 		const float x = (2 * (j + rotX) / (float)*width - 1.f) * tang * *width / (float)*height;
 		const float y = -(2 * (i + rotY) / (float)*height - 1.f) * tang;
 		const Vec3f dir = Vec3f(x, y, -1).normalize();
@@ -129,9 +130,10 @@ __global__ void dev_exportToJPG(const unsigned short* const width, const unsigne
 		{
 			col = col * (1.f / maxBGR);
 		}
-		B[j + i * gridDim.x] = col.BLUE * 255;
-		G[j + i * gridDim.x] = col.GREEN * 255;
-		R[j + i * gridDim.x] = col.RED * 255;
+		//col = max(col.BLUE, max(col.GREEN, col.RED)) > 1.f ? col * (1.f / maxBGR) : col;
+		B[j + i * *width] = col.BLUE * 255;
+		G[j + i * *width] = col.GREEN * 255;
+		R[j + i * *width] = col.RED * 255;
 	}
 }
 
@@ -287,7 +289,7 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 			std::cin.ignore();
 		}
 	} while (height < 90 || height > 2160);
-	std::cout << "Execute on: [0 -> CPU; 1 -> GPU, 2 -> Get test]: ";
+	std::cout << "Execute on: [CPU -> 0; GPU -> 1, Get test -> 2]: ";
 	do
 	{
 		std::cin >> executor;
@@ -303,8 +305,8 @@ void input(char& demo, unsigned short& spheresCount, unsigned short& lightsCount
 	std::cout << "Spheres: " << spheresCount << std::endl;
 	std::cout << "Lights: " << lightsCount << std::endl;
 	std::cout << "Resolution: " << width << 'x' << height << std::endl;
-	std::cout << "File: " << fileName << std::endl;
 	std::cout << "Executor: " << executor << std::endl;
+	std::cout << "File: " << fileName << std::endl;
 }
 
 
@@ -358,11 +360,19 @@ int main()
 			size_t stackSize;
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "Stack size = " << stackSize << std::endl;
-			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 8));
+			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 4));
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "New stack size = " << stackSize << std::endl;
+			cudaFuncSetCacheConfig(dev_exportToJPG, cudaFuncCachePreferL1);
+			//cudaFuncSetCacheConfig(dev_exportToJPG, cudaFuncCachePreferShared);
+			//int val;
+			//cudaDeviceGetAttribute(&val, cudaDeviceAttr::cudaDevAttrMaxBlockDimX, 0);
+			//cudaDeviceGetAttribute(&val, cudaDeviceAttr::cudaDevAttrMaxBlockDimY, 0);
+			const int maxBlockDimX = 32, maxBlockDimY = 16;
+			const auto gridDimXY = dim3((width + maxBlockDimX - 1) / maxBlockDimX, (height + maxBlockDimY - 1) / maxBlockDimY);
+			const auto blockDimXY = dim3(maxBlockDimX, maxBlockDimY);
 			clock_t Start = clock();
-			dev_exportToJPG<<<dim3(width, height), 1>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
+			dev_exportToJPG<<<gridDimXY, blockDimXY>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
 			cudaDeviceSynchronize();
 			clock_t End = clock();
 			std::cout << "GPU execution: " << ((double)End - Start) / CLOCKS_PER_SEC << std::endl;
@@ -423,13 +433,17 @@ int main()
 			size_t stackSize;
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "Stack size = " << stackSize << std::endl;
-			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 8));
+			HANDLE_ERROR(cudaDeviceSetLimit(cudaLimitStackSize, stackSize * 4));
 			HANDLE_ERROR(cudaDeviceGetLimit(&stackSize, cudaLimitStackSize));
 			std::cout << "New stack size = " << stackSize << std::endl;
+			cudaFuncSetCacheConfig(dev_exportToJPG, cudaFuncCachePreferL1);
+			const int maxBlockDimX = 32, maxBlockDimY = 16;
+			const auto gridDimXY = dim3((width + maxBlockDimX - 1) / maxBlockDimX, (height + maxBlockDimY - 1) / maxBlockDimY);
+			const auto blockDimXY = dim3(maxBlockDimX, maxBlockDimY);
 			for (int i = 0; i < TEST_COUNT; ++i)
 			{
 				clock_t Start = clock();
-				dev_exportToJPG<<<dim3(width, height), 1>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
+				dev_exportToJPG<<<gridDimXY, blockDimXY>>>(dev_Width, dev_Height, dev_B, dev_G, dev_R, dev_Spheres, spheresCount, dev_Lights, lightsCount);
 				cudaDeviceSynchronize();
 				clock_t End = clock();
 				std::cout << "GPU execution: " << ((double)End - Start) / CLOCKS_PER_SEC << std::endl;
