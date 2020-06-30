@@ -69,12 +69,13 @@ __host__ __device__ ColorRGB castRay(const Vec3f& pos, const Vec3f& dir, const S
 
 __global__ void dev_exportToJPG(const unsigned short* const width, const unsigned short* const height, unsigned char* B, unsigned char* G, unsigned char* R, const Sphere* const spheres, const uint spheresCount, const Light* const lights, const uint lightsCount)
 {
-	if (blockIdx.x < *width && blockIdx.y < *height)
+	const auto j = blockIdx.x * blockDim.x + threadIdx.x;
+	const auto i = blockIdx.y * blockDim.y + threadIdx.y;
+	if (j < *width && i < *height)
 	{
 		const float fov = M_PI_2;//75.f;
 		const float tang = tan(fov / 2.f / 2.f);
 		const float rotX = 0.f, rotY = 0.f;
-		auto j = blockIdx.x, i = blockIdx.y;
 		const float x = (2 * (j + rotX) / (float)*width - 1.f) * tang * *width / (float)*height;
 		const float y = -(2 * (i + rotY) / (float)*height - 1.f) * tang;
 		const Vec3f dir = Vec3f(x, y, -1).normalize();
@@ -84,8 +85,9 @@ __global__ void dev_exportToJPG(const unsigned short* const width, const unsigne
 		{
 			col = col * (1.f / maxBGR);
 		}
-		B[j + i * gridDim.x] = col.BLUE * 255;
-		G[j + i * gridDim.x] = col.GREEN * 255;
-		R[j + i * gridDim.x] = col.RED * 255;
+		//col = max(col.BLUE, max(col.GREEN, col.RED)) > 1.f ? col * (1.f / maxBGR) : col;
+		B[j + i * *width] = col.BLUE * 255;
+		G[j + i * *width] = col.GREEN * 255;
+		R[j + i * *width] = col.RED * 255;
 	}
 }
