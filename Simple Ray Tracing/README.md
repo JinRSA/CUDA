@@ -17,10 +17,12 @@ FHD | 1920×1080	|	6,62854	|	0,32913	|	20,1396
 qHD | 960×540 | 1,6671 | 0,10035 | 16,6129
 
 ---
-Компилировать командой:
+<h4>Компилировать командой:</h4>
+
 `nvcc EasyBMP.cpp kernel.cu -O3 -use_fast_math -Xptxas -dlcm=ca`
 ***
-Некоторые примеры.
+<h4>Некоторые примеры.</h4>
+
 ![Image alt](https://github.com/JinRSA/CUDA/blob/master/Simple%20Ray%20Tracing/Images/Demo%20sample%201.jpg)
 
 ![Image alt](https://github.com/JinRSA/CUDA/blob/master/Simple%20Ray%20Tracing/Images/Randome%20sample%200.jpg)
