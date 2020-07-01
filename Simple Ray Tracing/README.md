@@ -18,7 +18,7 @@ qHD | 960×540 | 1,6671 | 0,044934 | 37,1011
 ---
 <h4>Компилировать командой:</h4>
 
-`nvcc EasyBMP.cpp kernel.cu -O3 -use_fast_math -Xptxas -dlcm=ca`
+`nvcc EasyBMP.cpp kernel.cu -O3 -use_fast_math -Xptxas -dlcm=ca -restrict`
 ***
 <h4>Некоторые примеры.</h4>
 
